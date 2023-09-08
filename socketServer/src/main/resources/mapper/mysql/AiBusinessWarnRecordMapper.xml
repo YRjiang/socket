@@ -1,0 +1,350 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.socketserver.mapper.AiBusinessWarnRecordMapper">
+    <resultMap id="BaseResultMap" type="com.example.socketserver.entity.AiBusinessWarnRecord">
+        <!--@mbg.generated-->
+        <!--@Table ai_business_warn_record-->
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="dept_id" jdbcType="BIGINT" property="deptId"/>
+        <result column="dept_name" jdbcType="VARCHAR" property="deptName"/>
+        <result column="task_id" jdbcType="INTEGER" property="taskId"/>
+        <result column="task_name" jdbcType="VARCHAR" property="taskName"/>
+        <result column="device_name" jdbcType="VARCHAR" property="deviceName"/>
+        <result column="device_coding" jdbcType="VARCHAR" property="deviceCoding"/>
+        <result column="warn_type" jdbcType="CHAR" property="warnType"/>
+        <result column="warn_time" jdbcType="TIMESTAMP" property="warnTime"/>
+        <result column="warn_content" jdbcType="VARCHAR" property="warnContent"/>
+        <result column="image_Info" jdbcType="VARCHAR" property="imageInfo"/>
+        <result column="recognition_image" jdbcType="VARCHAR" property="recognitionImage"/>
+        <result column="handle_time" jdbcType="TIMESTAMP" property="handleTime"/>
+        <result column="handle_people" jdbcType="VARCHAR" property="handlePeople"/>
+        <result column="status" jdbcType="CHAR" property="status"/>
+        <result column="handle_describe" jdbcType="VARCHAR" property="handleDescribe"/>
+        <result column="create_by" jdbcType="VARCHAR" property="createBy"/>
+        <result column="create_time" jdbcType="TIMESTAMP" property="createTime"/>
+        <result column="update_by" jdbcType="VARCHAR" property="updateBy"/>
+        <result column="update_time" jdbcType="TIMESTAMP" property="updateTime"/>
+        <result column="delete_status" jdbcType="CHAR" property="deleteStatus"/>
+        <result column="warn_type_dict" jdbcType="VARCHAR" property="warnTypeDict"/>
+        <result column="ancestors" jdbcType="VARCHAR" property="ancestors"/>
+
+        <result column="answer_time" jdbcType="TIMESTAMP" property="answerTime"/>
+        <result column="answer_people" jdbcType="VARCHAR" property="answerPeople"/>
+        <result column="answer_describe" jdbcType="VARCHAR" property="answerDescribe"/>
+
+        <result column="builder" jdbcType="VARCHAR" property="builder"/>
+        <result column="supervisor" jdbcType="VARCHAR" property="supervisor"/>
+        <result column="inspector" jdbcType="VARCHAR" property="inspector"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        <!--@mbg.generated-->
+        id, dept_id, dept_name, task_id, task_name, device_name, device_coding, warn_type,
+        warn_time, warn_content, image_Info, recognition_image, handle_time, handle_people,
+        `status`, handle_describe, create_by, create_time, update_by, update_time, delete_status
+    </sql>
+
+    <select id="selectListByCondition" resultMap="BaseResultMap">
+        select warn.id, warn.dept_id, warn.dept_name, warn.task_id, warn.task_name, warn.device_name,
+        warn.device_coding, warn.warn_type,
+        warn.warn_time, warn.warn_content, warn.image_Info, warn.recognition_image, warn.handle_time,
+        warn.handle_people,
+        warn.`status`, warn.handle_describe, warn.create_by, warn.create_time, warn.update_by, warn.update_time,
+        warn.delete_status,
+        (select dict.DICT_LABEL from sys_dict_data dict WHERE dict.DICT_VALUE = warn.warn_type AND dict.DICT_TYPE =
+        'ai_warn_type') warn_type_dict
+        from ai_business_warn_record warn
+        <where>
+            <if test="deviceCoding != null and deviceCoding != ''">
+                and warn.device_coding like concat(concat('%', #{deviceCoding,jdbcType=VARCHAR}), '%')
+            </if>
+            <if test="deviceName != null and deviceName != ''">
+                and warn.device_name like concat(concat('%', #{deviceName,jdbcType=VARCHAR}), '%')
+            </if>
+            <if test="warnType != null and warnType != ''">
+                and warn.warn_type = #{warnType}
+            </if>
+            <if test="status != null and status != ''">
+                and warn.status = #{status}
+            </if>
+            <if test="startWarnTime != null">
+                and warn.warn_time >= #{startWarnTime}
+            </if>
+            <if test="endWarnTime != null">
+                and warn.warn_time <![CDATA[ <= ]]> #{endWarnTime}
+            </if>
+        </where>
+    </select>
+
+
+    <select id="getById" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        select a.dept_id,
+               a.id,
+               a.task_id,
+               a.task_name,
+               a.device_name,
+               a.device_coding,
+               a.warn_type,
+               a.warn_time,
+               a.warn_content,
+               a.image_Info,
+               a.recognition_image,
+               a.handle_time,
+               a.handle_people,
+               a.`status`,
+               a.handle_describe,
+               a.create_by,
+               a.create_time,
+               a.update_by,
+               a.update_time,
+               a.delete_status,
+               (select s.dict_label
+                from sys_dict_data s
+                where s.DICT_TYPE = 'ai_warn_type' and s.dict_value = a.warn_type) as warn_type_dict,
+               s.dept_name,
+               s.ancestors,
+               a.answer_time,
+               a.answer_people,
+               a.answer_describe,
+               (select group_concat(distinct aii.name)  from ai_task_image ati
+                    inner join ai_image_info aii on aii.id = ati.image_id
+                    where ati.task_id = a.task_id and ati.user_type = '1') as builder,
+               (select group_concat(distinct aii.name)  from ai_task_image ati
+                    inner join ai_image_info aii on aii.id = ati.image_id
+                    where ati.task_id = a.task_id and ati.user_type = '2') as supervisor,
+               (select group_concat(distinct aii.name)  from ai_task_image ati
+                    inner join ai_image_info aii on aii.id = ati.image_id
+                    where ati.task_id = a.task_id and ati.user_type = '3') as inspector
+        from ai_business_warn_record a
+                 left join sys_dept s on s.dept_id = a.dept_id
+        where a.id = #{id}
+    </select>
+
+    <update id="updateById" parameterType="com.example.socketserver.entity.AiBusinessWarnRecord">
+        <!--@mbg.generated-->
+        update ai_business_warn_record
+        <set>
+            <if test="deptId != null">
+                dept_id = #{deptId,jdbcType=BIGINT},
+            </if>
+            <if test="deptName != null and deptName != ''">
+                dept_name = #{deptName,jdbcType=VARCHAR},
+            </if>
+            <if test="taskId != null">
+                task_id = #{taskId,jdbcType=INTEGER},
+            </if>
+            <if test="taskName != null and taskName != ''">
+                task_name = #{taskName,jdbcType=VARCHAR},
+            </if>
+            <if test="deviceName != null and deviceName != ''">
+                device_name = #{deviceName,jdbcType=VARCHAR},
+            </if>
+            <if test="deviceCoding != null and deviceCoding != ''">
+                device_coding = #{deviceCoding,jdbcType=VARCHAR},
+            </if>
+            <if test="warnType != null and warnType != ''">
+                warn_type = #{warnType,jdbcType=CHAR},
+            </if>
+            <if test="warnTime != null">
+                warn_time = #{warnTime,jdbcType=TIMESTAMP},
+            </if>
+            <if test="warnContent != null and warnContent != ''">
+                warn_content = #{warnContent,jdbcType=VARCHAR},
+            </if>
+            <if test="imageInfo != null and imageInfo != ''">
+                image_Info = #{imageInfo,jdbcType=VARCHAR},
+            </if>
+            <if test="recognitionImage != null and recognitionImage != ''">
+                recognition_image = #{recognitionImage,jdbcType=VARCHAR},
+            </if>
+            <if test="handleTime != null">
+                handle_time = #{handleTime,jdbcType=TIMESTAMP},
+            </if>
+            <if test="handlePeople != null and handlePeople != ''">
+                handle_people = #{handlePeople,jdbcType=VARCHAR},
+            </if>
+            <if test="status != null and status != ''">
+                `status` = #{status,jdbcType=CHAR},
+            </if>
+            <if test="handleDescribe != null and handleDescribe != ''">
+                handle_describe = #{handleDescribe,jdbcType=VARCHAR},
+            </if>
+            <if test="createBy != null and createBy != ''">
+                create_by = #{createBy,jdbcType=VARCHAR},
+            </if>
+            <if test="createTime != null">
+                create_time = #{createTime,jdbcType=TIMESTAMP},
+            </if>
+            <if test="updateBy != null and updateBy != ''">
+                update_by = #{updateBy,jdbcType=VARCHAR},
+            </if>
+            <if test="updateTime != null">
+                update_time = #{updateTime,jdbcType=TIMESTAMP},
+            </if>
+            <if test="deleteStatus != null and deleteStatus != ''">
+                delete_status = #{deleteStatus,jdbcType=CHAR},
+            </if>
+            <if test="answerTime != null">
+                answer_time = #{answerTime,jdbcType=TIMESTAMP},
+            </if>
+            <if test="answerPeople != null and answerPeople != ''">
+                answer_people = #{answerPeople,jdbcType=VARCHAR},
+            </if>
+            <if test="answerDescribe != null and answerDescribe != ''">
+                answer_describe = #{answerDescribe,jdbcType=VARCHAR},
+            </if>
+        </set>
+        where id = #{id,jdbcType=BIGINT}
+    </update>
+
+    <update id="deleteById">
+        update ai_business_warn_record
+        set delete_status = '1'
+        where id = #{id,jdbcType=BIGINT}
+    </update>
+
+    <select id="listDeviceByParam" resultMap="BaseResultMap">
+        select warn.id, warn.dept_id, warn.dept_name, warn.task_id, warn.task_name, warn.device_name,
+        warn.device_coding, warn.warn_type,
+        warn.warn_time, warn.warn_content, warn.image_Info, warn.recognition_image, warn.handle_time,
+        warn.handle_people,
+        warn.`status`, warn.handle_describe, warn.create_by, warn.create_time, warn.update_by, warn.update_time,
+        warn.delete_status,
+        (select dict.DICT_LABEL from sys_dict_data dict WHERE dict.DICT_VALUE = warn.warn_type AND dict.DICT_TYPE =
+        'ai_warn_type') warn_type_dict
+        from ai_business_warn_record warn
+        left join ai_task_info task on task.task_id = warn.task_id
+        left join sys_dept dept on task.dept_id = dept.dept_id
+        <if test="aiBusinessWarnRecordParam.userId != null and aiBusinessWarnRecordParam.userId != ''">
+            inner join sys_user_dept syd on dept.dept_id = syd.dept_id
+        </if>
+        <where>
+            dept.del_flag = '0' and warn.delete_status = '0'
+            <if test="aiBusinessWarnRecordParam.deviceCoding != null and aiBusinessWarnRecordParam.deviceCoding != ''">
+                and warn.device_coding like concat(concat('%',
+                #{aiBusinessWarnRecordParam.deviceCoding,jdbcType=VARCHAR}), '%')
+            </if>
+            <if test="aiBusinessWarnRecordParam.deviceName != null and aiBusinessWarnRecordParam.deviceName != ''">
+                and warn.device_name like concat(concat('%', #{aiBusinessWarnRecordParam.deviceName,jdbcType=VARCHAR}),
+                '%')
+            </if>
+            <if test="aiBusinessWarnRecordParam.taskName != null and aiBusinessWarnRecordParam.taskName != ''">
+                and warn.task_name like concat(concat('%', #{aiBusinessWarnRecordParam.taskName,jdbcType=VARCHAR}), '%')
+            </if>
+            <if test="aiBusinessWarnRecordParam.taskType != null and aiBusinessWarnRecordParam.taskType != ''">
+                and task.task_type = #{aiBusinessWarnRecordParam.taskType}
+            </if>
+            <if test="aiBusinessWarnRecordParam.warnType != null and aiBusinessWarnRecordParam.warnType != ''">
+                and warn.warn_type = #{aiBusinessWarnRecordParam.warnType}
+            </if>
+            <if test="aiBusinessWarnRecordParam.status != null and aiBusinessWarnRecordParam.status != ''">
+                and warn.status = #{aiBusinessWarnRecordParam.status}
+            </if>
+            <if test="aiBusinessWarnRecordParam.startWarnTime != null">
+                and warn.warn_time >= #{aiBusinessWarnRecordParam.startWarnTime}
+            </if>
+            <if test="aiBusinessWarnRecordParam.endWarnTime != null">
+                and warn.warn_time <![CDATA[ <= ]]> #{aiBusinessWarnRecordParam.endWarnTime}
+            </if>
+            <if test="aiBusinessWarnRecordParam.deptType != null and aiBusinessWarnRecordParam.deptType != ''">
+                AND dept.dept_type = #{aiBusinessWarnRecordParam.deptType,jdbcType=VARCHAR}
+            </if>
+            <if test="aiBusinessWarnRecordParam.areaId != null and aiBusinessWarnRecordParam.areaId != ''">
+                AND (dept.city_id = #{aiBusinessWarnRecordParam.areaId,jdbcType=VARCHAR}
+                or dept.country_id= #{aiBusinessWarnRecordParam.areaId,jdbcType=VARCHAR})
+            </if>
+            <if test="aiBusinessWarnRecordParam.deptId != null and aiBusinessWarnRecordParam.deptId != ''">
+                AND (dept.dept_id = #{aiBusinessWarnRecordParam.deptId,jdbcType=VARCHAR}
+                or dept.parent_id = #{aiBusinessWarnRecordParam.deptId,jdbcType=VARCHAR})
+            </if>
+            <if test="aiBusinessWarnRecordParam.userId != null and aiBusinessWarnRecordParam.userId != ''">
+                AND syd.USER_ID=#{aiBusinessWarnRecordParam.userId,jdbcType=VARCHAR}
+            </if>
+            ORDER BY warn.warn_time desc
+        </where>
+    </select>
+    <select id="listDeviceByParamDeep" resultMap="BaseResultMap">
+        select warn.id, warn.dept_id, dept.dept_name, warn.task_id, warn.task_name, warn.device_name,
+        warn.device_coding, warn.warn_type,
+        warn.warn_time, warn.warn_content, warn.image_Info, warn.recognition_image, warn.handle_time,
+        warn.handle_people,
+        warn.`status`, warn.handle_describe, warn.create_by, warn.create_time, warn.update_by, warn.update_time,
+        warn.delete_status,
+        dept.ancestors,
+        (select dict.DICT_LABEL from sys_dict_data dict WHERE dict.DICT_VALUE = warn.warn_type AND dict.DICT_TYPE =
+        'ai_warn_type') warn_type_dict
+        from ai_business_warn_record warn
+        left join ai_task_info task on task.task_id = warn.task_id
+        left join sys_dept dept on task.dept_id = dept.dept_id
+        <where>
+            dept.del_flag = '0' and warn.delete_status = '0'
+            <if test="aiBusinessWarnRecordParam.deviceCoding != null and aiBusinessWarnRecordParam.deviceCoding != ''">
+                and warn.device_coding like concat(concat('%',
+                #{aiBusinessWarnRecordParam.deviceCoding,jdbcType=VARCHAR}), '%')
+            </if>
+            <if test="aiBusinessWarnRecordParam.deviceName != null and aiBusinessWarnRecordParam.deviceName != ''">
+                and warn.device_name like concat(concat('%', #{aiBusinessWarnRecordParam.deviceName,jdbcType=VARCHAR}),
+                '%')
+            </if>
+            <if test="aiBusinessWarnRecordParam.taskName != null and aiBusinessWarnRecordParam.taskName != ''">
+                and warn.task_name like concat(concat('%', #{aiBusinessWarnRecordParam.taskName,jdbcType=VARCHAR}), '%')
+            </if>
+            <if test="aiBusinessWarnRecordParam.taskNameOrRoom != null and aiBusinessWarnRecordParam.taskNameOrRoom != ''">
+                and (warn.task_name like concat(concat('%', #{aiBusinessWarnRecordParam.taskNameOrRoom,jdbcType=VARCHAR}), '%')
+                    or warn.dept_name like concat(concat('%', #{aiBusinessWarnRecordParam.taskNameOrRoom,jdbcType=VARCHAR}), '%')
+                    or (select b.dept_name from sys_dept a left join sys_dept b on b.dept_id = a.parent_id where a.dept_id = warn.dept_id)
+                        like concat(concat('%', #{aiBusinessWarnRecordParam.taskNameOrRoom,jdbcType=VARCHAR}), '%')
+                    )
+            </if>
+            <if test="aiBusinessWarnRecordParam.taskType != null and aiBusinessWarnRecordParam.taskType != ''">
+                and task.task_type = #{aiBusinessWarnRecordParam.taskType}
+            </if>
+            <if test="aiBusinessWarnRecordParam.warnType != null and aiBusinessWarnRecordParam.warnType != ''">
+                and warn.warn_type = #{aiBusinessWarnRecordParam.warnType}
+            </if>
+            <if test="aiBusinessWarnRecordParam.status != null and aiBusinessWarnRecordParam.status != ''">
+                and warn.status = #{aiBusinessWarnRecordParam.status}
+            </if>
+            <if test="aiBusinessWarnRecordParam.startWarnTime != null">
+                and warn.warn_time >= #{aiBusinessWarnRecordParam.startWarnTime}
+            </if>
+            <if test="aiBusinessWarnRecordParam.endWarnTime != null">
+                and warn.warn_time <![CDATA[ <= ]]> #{aiBusinessWarnRecordParam.endWarnTime}
+            </if>
+            <if test="aiBusinessWarnRecordParam.deptType != null and aiBusinessWarnRecordParam.deptType != ''">
+                AND dept.dept_type = #{aiBusinessWarnRecordParam.deptType,jdbcType=VARCHAR}
+            </if>
+            <if test="aiBusinessWarnRecordParam.areaId != null and aiBusinessWarnRecordParam.areaId != ''">
+                AND (dept.city_id = #{aiBusinessWarnRecordParam.areaId,jdbcType=VARCHAR}
+                or dept.country_id= #{aiBusinessWarnRecordParam.areaId,jdbcType=VARCHAR})
+            </if>
+            <if test="aiBusinessWarnRecordParam.deptIds != null and aiBusinessWarnRecordParam.deptIds.size() > 0">
+                AND dept.dept_id in
+                <foreach collection="aiBusinessWarnRecordParam.deptIds" item="item" index="index" separator="," open="(" close=")">
+                    #{item}
+                </foreach>
+            </if>
+            ORDER BY warn.warn_time desc
+        </where>
+    </select>
+
+    <insert id="insert" keyColumn="id" keyProperty="id"
+            parameterType="com.example.socketserver.entity.AiBusinessWarnRecord" useGeneratedKeys="true">
+        <!--@mbg.generated-->
+        insert into ai_business_warn_record (dept_id, dept_name, task_id,
+        task_name, device_name, device_coding,
+        warn_type, warn_time, warn_content,
+        image_Info, recognition_image, handle_time,
+        handle_people, `status`, handle_describe,
+        create_by, create_time, update_by,
+        update_time, delete_status)
+        values (#{deptId,jdbcType=BIGINT}, #{deptName,jdbcType=VARCHAR}, #{taskId,jdbcType=INTEGER},
+        #{taskName,jdbcType=VARCHAR}, #{deviceName,jdbcType=VARCHAR}, #{deviceCoding,jdbcType=VARCHAR},
+        #{warnType,jdbcType=CHAR}, #{warnTime,jdbcType=TIMESTAMP}, #{warnContent,jdbcType=VARCHAR},
+        #{imageInfo,jdbcType=VARCHAR}, #{recognitionImage,jdbcType=VARCHAR}, #{handleTime,jdbcType=TIMESTAMP},
+        #{handlePeople,jdbcType=VARCHAR}, #{status,jdbcType=CHAR}, #{handleDescribe,jdbcType=VARCHAR},
+        #{createBy,jdbcType=VARCHAR}, #{createTime,jdbcType=TIMESTAMP}, #{updateBy,jdbcType=VARCHAR},
+        #{updateTime,jdbcType=TIMESTAMP}, #{deleteStatus,jdbcType=CHAR})
+    </insert>
+
+</mapper>
